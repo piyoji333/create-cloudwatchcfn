@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudFormation テンプレート生成</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            font-size: 14px; /* 全体の文字サイズを小さく設定 */
+        }
+        .main {
+            width: 50%; /* 入力フォームの幅を50%に調整 */
+            padding-right: 20px;
+            border-right: 1px solid #ccc;
+        }
+        .sidebar {
+            width: 50%; /* メトリクス例の幅を50%に調整 */
+            padding-left: 40px; /* メトリクス例をさらに右に寄せる */
+        }
+        h1, h2 {
+            font-size: 16px; /* 見出しを少し大きく設定 */
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        select, input, button {
+            margin-top: 5px;
+            padding: 8px;
+            font-size: 12px; /* フォーム要素の文字サイズをさらに小さく */
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow-x: auto;
+            margin-top: 20px;
+            font-size: 14px; /* テンプレート内容は標準サイズ */
+        }
+        .copy-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .copy-container button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            font-size: 10px; /* コピーボタンの文字サイズを小さく */
+            cursor: pointer;
+        }
+        ul {
+            list-style-type: none; /* リストのスタイルをなしに */
+            padding-left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <h1>CloudFormation テンプレート生成</h1>
+        <form id="generateForm">
+            <label>メトリスク:</label>
+            <input type="text" name="metric_name" placeholder="例: CPUUtilization" required>
+
+            <label>ネームスペース (Namespace):</label>
+            <input type="text" name="namespace" placeholder="例: AWS/EC2" required>
+
+            <label>評価期間 (Evaluation Periods):</label>
+            <input type="number" name="evaluation_periods" placeholder="例: 2" required>
+
+            <label>データポイント (Datapoints to Alarm):</label>
+            <input type="number" name="datapoints_to_alarm" placeholder="例: 2" required>
+
+            <label>閾値 (Threshold):</label>
+            <input type="number" name="threshold" placeholder="例: 80" required>
+
+            <label>期間 (Period, 秒):</label>
+            <select name="period" required>
+                <option value="60">60秒</option>
+                <option value="300">5分</option>
+                <option value="900">15分</option>
+            </select>
+
+            <label>比較演算子 (Comparison Operator):</label>
+            <select name="comparison_operator" required>
+                <option value="GreaterThanThreshold">GreaterThanThreshold</option>
+                <option value="LessThanThreshold">LessThanThreshold</option>
+                <option value="GreaterThanOrEqualToThreshold">GreaterThanOrEqualToThreshold</option>
+                <option value="LessThanOrEqualToThreshold">LessThanOrEqualToThreshold</option>
+            </select>
+
+            <label>統計 (Statistic):</label>
+            <select name="statistic" required>
+                <option value="SampleCount">SampleCount</option>
+                <option value="Average">Average</option>
+                <option value="Sum">Sum</option>
+                <option value="Minimum">Minimum</option>
+                <option value="Maximum">Maximum</option>
+            </select>
+
+            <label>ターゲット (Target):</label>
+            <input type="text" name="target" placeholder="例: arn:aws:elasticloadbalancing:..." required>
+
+            <label>
+                <input type="checkbox" name="recovery_alarm"> 復旧用アラームも作成する
+            </label>
+
+            <button type="submit">生成</button>
+        </form>
+
+        <h2>生成されたテンプレート</h2>
+        <div class="copy-container">
+            <pre id="result">ここに生成されたテンプレートが表示されます。</pre>
+            <button id="copyButton">コピー</button>
+        </div>
+    </div>
+    <div class="sidebar">
+        <h2>メトリクス例</h2>
+        <h3>Amazon EC2</h3>
+        <ul>
+            <li><strong>CPUUtilization</strong>: CPU 使用率を監視します。</li>
+            <li><strong>StatusCheckFailed</strong>: インスタンスのステータスチェックの失敗を検出します。</li>
+            <li><strong>DiskQueueLength</strong>: ディスクキューの長さを監視します。</li>
+            <li><strong>NetworkPacketsIn/Out</strong>: ネットワークパケットの受信および送信量を監視します。</li>
+        </ul>
+        <h3>Application Load Balancer (ALB)</h3>
+        <ul>
+            <li><strong>HTTPCode_ELB_4XX_Count</strong>: ELB レベルでの 4XX エラーの数を監視します。</li>
+            <li><strong>HTTPCode_ELB_5XX_Count</strong>: ELB レベルでの 5XX エラーの数を監視します。</li>
+            <li><strong>TargetResponseTime</strong>: ターゲットの応答時間を監視します。</li>
+            <li><strong>HealthyHostCount</strong>: ヘルシーなホストの数を監視します。</li>
+        </ul>
+        <h3>Amazon CloudFront</h3>
+        <ul>
+            <li><strong>4xxErrorRate</strong>: 4XX エラーの割合を監視します。</li>
+            <li><strong>5xxErrorRate</strong>: 5XX エラーの割合を監視します。</li>
+            <li><strong>TotalErrorRate</strong>: 総エラー率を監視します。</li>
+            <li><strong>CacheHitRate</strong>: キャッシュヒット率を監視します。</li>
+        </ul>
+        <h3>Amazon RDS</h3>
+        <ul>
+            <li><strong>CPUUtilization</strong>: CPU 使用率を監視します。</li>
+            <li><strong>FreeStorageSpace</strong>: 利用可能なストレージ容量を監視します。</li>
+            <li><strong>DatabaseConnections</strong>: データベースへの接続数を監視します。</li>
+            <li><strong>ReplicaLag</strong>: レプリカの遅延を監視します。</li>
+        </ul>
+        <h3>Amazon Aurora</h3>
+        <ul>
+            <li><strong>CPUUtilization</strong>: CPU 使用率を監視します。</li>
+            <li><strong>FreeableMemory</strong>: 利用可能なメモリを監視します。</li>
+            <li><strong>DiskQueueDepth</strong>: ディスクキューの深さを監視します。</li>
+            <li><strong>Deadlocks</strong>: デッドロックの数を監視します。</li>
+        </ul>
+        <h3>Amazon ECS</h3>
+        <ul>
+            <li><strong>CPUUtilization</strong>: クラスター全体の CPU 使用率を監視します。</li>
+            <li><strong>MemoryUtilization</strong>: クラスター全体のメモリ使用率を監視します。</li>
+            <li><strong>RunningTaskCount</strong>: 実行中のタスク数を監視します。</li>
+            <li><strong>PendingTaskCount</strong>: 保留中のタスク数を監視します。</li>
+        </ul>
+    </div>
+    <script>
+        const apiEndpoint = "https://API-ENDPOINT-URL/";
+
+        document.getElementById('generateForm').onsubmit = async (event) => {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const jsonData = Object.fromEntries(formData);
+
+            // 復旧用アラームのチェックを確認
+            jsonData.recovery_alarm = formData.has('recovery_alarm');
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jsonData),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`APIエラー: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                document.getElementById('result').textContent = result.template || result.error;
+            } catch (error) {
+                document.getElementById('result').textContent = `エラーが発生しました: ${error.message}`;
+            }
+        };
+
+        document.getElementById('copyButton').onclick = () => {
+            const templateText = document.getElementById('result').textContent;
+            navigator.clipboard.writeText(templateText)
+                .then(() => {
+                    alert("テンプレートがクリップボードにコピーされました！");
+                })
+                .catch((error) => {
+                    alert("コピーに失敗しました: " + error.message);
+                });
+        };
+    </script>
+</body>
+</html>
+
