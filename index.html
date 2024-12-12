@@ -9,19 +9,19 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             display: flex;
-            font-size: 14px; /* 全体の文字サイズを小さく設定 */
+            font-size: 14px;
         }
         .main {
-            width: 50%; /* 入力フォームの幅を50%に調整 */
+            width: 50%;
             padding-right: 20px;
             border-right: 1px solid #ccc;
         }
         .sidebar {
-            width: 50%; /* メトリクス例の幅を50%に調整 */
-            padding-left: 40px; /* メトリクス例をさらに右に寄せる */
+            width: 50%;
+            padding-left: 20px;
         }
         h1, h2 {
-            font-size: 16px; /* 見出しを少し大きく設定 */
+            font-size: 16px;
         }
         form {
             margin-bottom: 20px;
@@ -33,7 +33,7 @@
         select, input, button {
             margin-top: 5px;
             padding: 8px;
-            font-size: 12px; /* フォーム要素の文字サイズをさらに小さく */
+            font-size: 12px;
         }
         pre {
             background: #f4f4f4;
@@ -41,7 +41,7 @@
             border: 1px solid #ccc;
             overflow-x: auto;
             margin-top: 20px;
-            font-size: 14px; /* テンプレート内容は標準サイズ */
+            font-size: 14px;
         }
         .copy-container {
             display: flex;
@@ -51,12 +51,8 @@
         .copy-container button {
             margin-left: 10px;
             padding: 5px 10px;
-            font-size: 10px; /* コピーボタンの文字サイズを小さく */
+            font-size: 12px;
             cursor: pointer;
-        }
-        ul {
-            list-style-type: none; /* リストのスタイルをなしに */
-            padding-left: 0;
         }
     </style>
 </head>
@@ -64,11 +60,17 @@
     <div class="main">
         <h1>CloudFormation テンプレート生成</h1>
         <form id="generateForm">
-            <label>メトリスク:</label>
-            <input type="text" name="metric_name" placeholder="例: CPUUtilization" required>
-
             <label>ネームスペース (Namespace):</label>
-            <input type="text" name="namespace" placeholder="例: AWS/EC2" required>
+            <select id="namespace" name="namespace" required>
+                <option value="AWS/EC2">AWS/EC2</option>
+                <option value="AWS/ApplicationELB">AWS/ApplicationELB</option>
+                <option value="AWS/RDS">AWS/RDS</option>
+                <option value="AWS/CloudFront">AWS/CloudFront</option>
+                <option value="AWS/ECS">AWS/ECS</option>
+            </select>
+
+            <label>メトリック名:</label>
+            <input type="text" name="metric_name" placeholder="例: CPUUtilization" required>
 
             <label>評価期間 (Evaluation Periods):</label>
             <input type="number" name="evaluation_periods" placeholder="例: 2" required>
@@ -103,8 +105,8 @@
                 <option value="Maximum">Maximum</option>
             </select>
 
-            <label>ターゲット (Target):</label>
-            <input type="text" name="target" placeholder="例: arn:aws:elasticloadbalancing:..." required>
+            <label>ターゲット:</label>
+            <input type="text" id="target" name="target" placeholder="例: instance-id" required>
 
             <label>
                 <input type="checkbox" name="recovery_alarm"> 復旧用アラームも作成する
@@ -163,17 +165,21 @@
             <li><strong>RunningTaskCount</strong>: 実行中のタスク数を監視します。</li>
             <li><strong>PendingTaskCount</strong>: 保留中のタスク数を監視します。</li>
         </ul>
+	  <h3>ターゲット例</h3>
+        <ul>
+            <li><strong>AWS/EC2</strong>: インスタンスID</li>
+            <li><strong>AWS/RDS</strong>: DBインスタンスネーム </li>
+            <li><strong>AWS/Loadbalanser</strong>: ロードバランサーARN</li>
+            <li><strong>AWS/CloudFront</strong>: ディストリビューションID </li>
+        </ul>
     </div>
     <script>
-        const apiEndpoint = "https://API-ENDPOINT-URL/";
+        const apiEndpoint = "https://ofgflx8qvl.execute-api.ap-northeast-1.amazonaws.com/";
 
         document.getElementById('generateForm').onsubmit = async (event) => {
             event.preventDefault();
             const formData = new FormData(event.target);
             const jsonData = Object.fromEntries(formData);
-
-            // 復旧用アラームのチェックを確認
-            jsonData.recovery_alarm = formData.has('recovery_alarm');
 
             try {
                 const response = await fetch(apiEndpoint, {
